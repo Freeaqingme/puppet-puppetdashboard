@@ -34,6 +34,8 @@ class puppetdashboard::params {
   $package = $::operatingsystem ? {
     default => 'puppet-dashboard',
   }
+  
+  $install_method = 'package'
 
   $service = $::operatingsystem ? {
     default => 'puppet-dashboard',
@@ -61,16 +63,25 @@ class puppetdashboard::params {
   }
 
   $config_dir = $::operatingsystem ? {
-    default => '/usr/share/puppet-dashboard/config',
+    /(?i:Darwin|FreeBsd)/   => '/usr/local/share/puppet-dashboard/config',
+    default                 => '/usr/share/puppet-dashboard/config',
   }
 
   $config_file = $::operatingsystem ? {
-    default => '/usr/share/puppet-dashboard/config/settings.yml',
+    /(?i:Darwin|FreeBsd)/ => '/usr/local/share/puppet-dashboard/config/settings.yml',
+    default               => '/usr/share/puppet-dashboard/config/settings.yml',
   }
 
   $config_file_db = $::operatingsystem ? {
+    /(?i:Darwin|FreeBsd)/           => '/usr/local/share/puppet-dashboard/config/database.yml',
     /(?i:RedHat|Centos|Scientific)/ => '/usr/share/puppet-dashboard/config/database.yml',
-    default => '/etc/puppet-dashboard/database.yml',
+    default                         => '/etc/puppet-dashboard/database.yml',
+  }
+
+  $config_file_dir = $::operatingsystem ? {
+    /(?i:Darwin|FreeBsd)/           => '/usr/local/share/puppet-dashboard/config',
+    /(?i:RedHat|Centos|Scientific)/ => '/usr/share/puppet-dashboard/config',
+    default                         => '/etc/puppet-dashboard',
   }
 
   $config_file_mode = $::operatingsystem ? {
@@ -82,20 +93,22 @@ class puppetdashboard::params {
   }
 
   $config_file_group = $::operatingsystem ? {
-    default => 'root',
+    /(?i:FreeBSD)/ => 'wheel',
+    default        => 'root',
   }
 
   $config_file_init = $::operatingsystem ? {
     /(?i:Debian|Ubuntu|Mint)/ => '/etc/default/puppet-dashboard',
     default                   => '/etc/sysconfig/puppet-dashboard',
   }
-
+  
   $pid_file = $::operatingsystem ? {
     default => '/var/run/puppet-dashboard.pid',
   }
 
   $data_dir = $::operatingsystem ? {
-    default => '/usr/share/puppet-dashboard/',
+    /(?i:Darwin|FreeBsd)/   => '/usr/local/share/puppet-dashboard/',
+    default                 => '/usr/share/puppet-dashboard/',
   }
 
   $log_dir = $::operatingsystem ? {

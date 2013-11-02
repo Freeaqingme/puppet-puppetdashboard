@@ -18,7 +18,6 @@ class puppetdashboard::mysql inherits puppetdashboard {
     command     => 'rake RAILS_ENV=production db:migrate',
     require     => Mysql::Grant["puppetdashboard_grants_${::fqdn}"],
     refreshonly => true,
-    path        => '/usr/bin:/bin:/usr/sbin:/sbin',
-    subscribe   => Package['puppetdashboard'],
+#    path        => '/usr/bin:/bin:/usr/sbin:/sbin:',
   }
 }

@@ -174,6 +174,12 @@
 # [*package*]
 #   The name of puppetdashboard package
 #
+# [*install_method*]
+#   String. Must be either 'package' (default) or 'build'
+#   - 'package' will install dashboard by defining a package resource
+#   - 'build' will download and install builds as provided by PuppetLabs.
+#     Requires a specific version to be set.
+#
 # [*service*]
 #   The name of puppetdashboard service
 #
@@ -284,6 +290,7 @@ class puppetdashboard (
   $debug                    = params_lookup( 'debug' , 'global' ),
   $audit_only               = params_lookup( 'audit_only' , 'global' ),
   $package                  = params_lookup( 'package' ),
+  $install_method           = params_lookup( 'install_method' ),
   $service                  = params_lookup( 'service' ),
   $service_workers          = params_lookup( 'service_workers' ),
   $service_status           = params_lookup( 'service_status' ),
@@ -295,6 +302,7 @@ class puppetdashboard (
   $config_file_mode         = params_lookup( 'config_file_mode' ),
   $config_file_owner        = params_lookup( 'config_file_owner' ),
   $config_file_group        = params_lookup( 'config_file_group' ),
+  $config_file_dir          = params_lookup( 'config_file_dir' ),
   $config_file_init         = params_lookup( 'config_file_init' ),
   $pid_file                 = params_lookup( 'pid_file' ),
   $data_dir                 = params_lookup( 'data_dir' ),
@@ -395,27 +403,24 @@ class puppetdashboard (
   }
 
   ### Managed resources
-  package { 'puppetdashboard':
-    ensure => $puppetdashboard::manage_package,
-    name   => $puppetdashboard::package,
-  }
+  include puppetdashboard::install
 
   service { 'puppetdashboard':
     ensure     => $puppetdashboard::manage_service_ensure,
-    name       => $puppetdashboard::service,
+    name       =>'/bin/true', #' $puppetdashboard::service,
     enable     => $puppetdashboard::manage_service_enable,
     hasstatus  => $puppetdashboard::service_status,
     pattern    => $puppetdashboard::process,
-    require    => Package['puppetdashboard'],
+    require    => Class['puppetdashboard::install'],
   }
 
   service { 'puppetdashboard-workers':
     ensure     => $puppetdashboard::manage_service_ensure,
-    name       => $puppetdashboard::service_workers,
+    name       =>'/bin/true 2', #$puppetdashboard::service_workers,
     enable     => $puppetdashboard::manage_service_enable,
     hasstatus  => $puppetdashboard::service_status,
     pattern    => $puppetdashboard::process,
-    require    => Package['puppetdashboard'],
+    require    => Class['puppetdashboard::install'],
   }
 
   file { 'puppetdashboard.conf':
@@ -424,7 +429,7 @@ class puppetdashboard (
     mode    => $puppetdashboard::config_file_mode,
     owner   => $puppetdashboard::config_file_owner,
     group   => $puppetdashboard::config_file_group,
-    require => Package['puppetdashboard'],
+    require => Class['puppetdashboard::install'],
     notify  => $puppetdashboard::manage_service_autorestart,
     source  => $puppetdashboard::manage_file_source,
     content => $puppetdashboard::manage_file_content,
@@ -438,7 +443,7 @@ class puppetdashboard (
     mode    => $puppetdashboard::config_file_mode,
     owner   => $puppetdashboard::config_file_owner,
     group   => $puppetdashboard::config_file_group,
-    require => Package['puppetdashboard'],
+    require => Class['puppetdashboard::install'],
     notify  => $puppetdashboard::manage_service_autorestart,
     content => template( $puppetdashboard::template_db ),
     replace => $puppetdashboard::manage_file_replace,
@@ -451,7 +456,7 @@ class puppetdashboard (
     file { 'default-puppetdashboard':
       ensure  => $puppetdashboard::manage_file,
       path    => $puppetdashboard::config_file_init,
-      require => Package[puppetdashboard],
+      require => Class['puppetdashboard::install'],
       content => template('puppetdashboard/default.init-ubuntu'),
       mode    => $puppetdashboard::config_file_mode,
       owner   => $puppetdashboard::config_file_owner,
@@ -461,7 +466,7 @@ class puppetdashboard (
     file { 'default-puppetdashboard-workers':
       ensure  => $puppetdashboard::manage_file,
       path    => "${puppetdashboard::config_file_init}-workers",
-      require => Package[puppetdashboard],
+      require => Class['puppetdashboard::install'],
       content => template('puppetdashboard/default-workers.init-ubuntu'),
       mode    => $puppetdashboard::config_file_mode,
       owner   => $puppetdashboard::config_file_owner,
@@ -475,7 +480,7 @@ class puppetdashboard (
     file { 'puppetdashboard.dir':
       ensure  => directory,
       path    => $puppetdashboard::config_dir,
-      require => Package['puppetdashboard'],
+      require => Class['puppetdashboard::install'],
       notify  => $puppetdashboard::manage_service_autorestart,
       source  => $puppetdashboard::source_dir,
       recurse => true,
